@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-green: #34d399;
+  --color-brand-green-light: rgba(52, 211, 153, 0.1);
+  --color-brand-dark: #0f172a;
+  --color-bg-dark: #020617;
+}
+
+body {
+  background-color: var(--color-bg-dark);
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  background-image: 
+    /* Subtle holographic grid */
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    /* Glowing green particle trails / streaks from right */
+    radial-gradient(ellipse at 80% 50%, rgba(52, 211, 153, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 20% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+    /* Smooth gradient lighting */
+    radial-gradient(circle at 50% 0%, rgba(30, 58, 138, 0.2) 0%, transparent 70%);
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
+  background-position: center;
+}
+
+/* Custom curved light streaks effect */
+.bg-streaks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-streaks::before,
+.bg-streaks::after {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: 
+    radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.05) 0%, transparent 50%),
+    conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(52, 211, 153, 0.1) 90deg, transparent 180deg);
+  border-radius: 50%;
+  transform-origin: center;
+  animation: rotate 60s linear infinite;
+  opacity: 0.5;
+}
+
+.bg-streaks::after {
+  animation-direction: reverse;
+  animation-duration: 90s;
+  opacity: 0.3;
+  background: conic-gradient(from 180deg at 50% 50%, transparent 0deg, rgba(16, 185, 129, 0.15) 90deg, transparent 180deg);
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg) scale(1.5); }
+  to { transform: rotate(360deg) scale(1.5); }
+}

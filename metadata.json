@@ -1,0 +1,5 @@
+{
+  "name": "Automated Data Cleaning Pipeline",
+  "description": "An automated pipeline for cleaning messy data, visualizing before/after states, and performing EDA with an AI assistant.",
+  "requestFramePermissions": []
+}
