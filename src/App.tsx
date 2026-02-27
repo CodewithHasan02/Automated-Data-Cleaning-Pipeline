@@ -37,20 +37,38 @@ export default function App() {
     }
   };
 
+  const handleHomeClick = () => {
+    setStarted(false);
+  };
+
+  const handleDashboardClick = () => {
+    if (user) {
+      setStarted(true);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col font-sans text-white pt-[72px] relative overflow-hidden">
+    <div className="min-h-screen flex flex-col font-sans text-white relative">
       {/* Background streaks effect */}
       <div className="bg-streaks"></div>
       
-      <Navbar onLoginClick={() => setShowAuth(true)} user={user} />
+      <Navbar 
+        onLoginClick={() => setShowAuth(true)} 
+        user={user} 
+        onHomeClick={handleHomeClick}
+        onDashboardClick={handleDashboardClick}
+        isDashboardView={started}
+      />
 
-      {!started ? (
-        <LandingPage onGetStarted={handleGetStarted} user={user} />
-      ) : (
-        <div className="relative z-10 flex-1 flex flex-col">
-          <Dashboard />
-        </div>
-      )}
+      <div className="flex-1 flex flex-col pt-[72px]">
+        {!started ? (
+          <LandingPage onGetStarted={handleGetStarted} user={user} />
+        ) : (
+          <div className="relative z-10 flex-1 flex flex-col">
+            <Dashboard />
+          </div>
+        )}
+      </div>
 
       {showAuth && <Auth onClose={() => setShowAuth(false)} />}
     </div>

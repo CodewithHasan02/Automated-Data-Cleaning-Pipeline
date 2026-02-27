@@ -23,6 +23,25 @@ body {
   background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, 100% 100%;
   background-attachment: fixed;
   background-position: center;
+  user-select: none; /* Prevent text selection globally */
+  caret-color: transparent; /* Hide blinking cursor globally */
+  -webkit-tap-highlight-color: transparent; /* Remove mobile tap highlight */
+}
+
+/* Re-enable selection and cursor for input elements */
+input, 
+textarea, 
+[contenteditable="true"],
+.selectable-text {
+  user-select: text;
+  caret-color: auto;
+  cursor: text;
+}
+
+/* Ensure buttons and links have proper cursors but no blinking caret */
+button, 
+a {
+  cursor: pointer;
 }
 
 /* Custom curved light streaks effect */

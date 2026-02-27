@@ -7,9 +7,12 @@ import { auth } from '../lib/firebase';
 interface NavbarProps {
   onLoginClick?: () => void;
   user?: User | null;
+  onHomeClick?: () => void;
+  onDashboardClick?: () => void;
+  isDashboardView?: boolean;
 }
 
-export default function Navbar({ onLoginClick, user }: NavbarProps) {
+export default function Navbar({ onLoginClick, user, onHomeClick, onDashboardClick, isDashboardView }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -23,25 +26,36 @@ export default function Navbar({ onLoginClick, user }: NavbarProps) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[#040B16]/40 backdrop-blur-2xl border-b border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all duration-300">
       <nav className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto w-full">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={onHomeClick}>
           <Database className="w-6 h-6 text-brand-green" />
           <span className="font-semibold text-lg tracking-tight hidden sm:block text-white">Automated Data Cleaning Pipeline</span>
-          <span className="font-semibold text-lg tracking-tight sm:hidden text-white">ADC</span>
+          <span className="font-semibold text-lg tracking-tight sm:hidden text-white">ADCP</span>
         </div>
         
         <div className="hidden md:flex items-center gap-1 bg-white/5 border border-white/10 rounded-full px-2 py-1.5 backdrop-blur-md shadow-inner">
-          <a href="#" className="px-4 py-1.5 rounded-full hover:bg-white/10 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300">
+          <button onClick={onHomeClick} className="px-4 py-1.5 rounded-full hover:bg-white/10 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300">
             Home
-          </a>
-          <a href="#features" className="px-4 py-1.5 rounded-full hover:bg-white/10 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300">
-            Features
-          </a>
-          <a href="#pricing" className="px-4 py-1.5 rounded-full hover:bg-white/10 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300">
-            Plans
-          </a>
-          <a href="#contact" className="px-4 py-1.5 rounded-full hover:bg-white/10 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300">
-            Contact
-          </a>
+          </button>
+          
+          {!isDashboardView && (
+            <>
+              <a href="#features" className="px-4 py-1.5 rounded-full hover:bg-white/10 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300">
+                Features
+              </a>
+              <a href="#pricing" className="px-4 py-1.5 rounded-full hover:bg-white/10 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300">
+                Plans
+              </a>
+              <a href="#contact" className="px-4 py-1.5 rounded-full hover:bg-white/10 text-sm font-medium text-gray-300 hover:text-white transition-all duration-300">
+                Contact
+              </a>
+            </>
+          )}
+
+          {user && !isDashboardView && (
+            <button onClick={onDashboardClick} className="px-4 py-1.5 rounded-full hover:bg-white/10 text-sm font-medium text-brand-green hover:text-emerald-400 transition-all duration-300">
+              Dashboard
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -79,10 +93,20 @@ export default function Navbar({ onLoginClick, user }: NavbarProps) {
             className="md:hidden bg-[#040B16]/95 backdrop-blur-xl border-t border-white/5 overflow-hidden"
           >
             <div className="flex flex-col px-6 py-4 space-y-2 text-sm font-medium text-gray-300">
-              <a href="#" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(false)}>Home</a>
-              <a href="#features" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(false)}>Features</a>
-              <a href="#pricing" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(false)}>Plans</a>
-              <a href="#contact" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(false)}>Contact</a>
+              <button onClick={() => { onHomeClick?.(); setIsMobileMenuOpen(false); }} className="text-left px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors">Home</button>
+              
+              {!isDashboardView && (
+                <>
+                  <a href="#features" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(false)}>Features</a>
+                  <a href="#pricing" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(false)}>Plans</a>
+                  <a href="#contact" className="px-4 py-2 rounded-lg hover:bg-white/5 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(false)}>Contact</a>
+                </>
+              )}
+
+              {user && !isDashboardView && (
+                <button onClick={() => { onDashboardClick?.(); setIsMobileMenuOpen(false); }} className="text-left px-4 py-2 rounded-lg hover:bg-white/5 text-brand-green transition-colors">Dashboard</button>
+              )}
+
               <div className="pt-2">
                 {user ? (
                   <button 

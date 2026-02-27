@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ChatbotProps {
   dataContext: any[];
+  onVisualizationRequest?: (details: { type: string; column?: string; columns?: string[] }) => void;
 }
 
-export default function Chatbot({ dataContext }: ChatbotProps) {
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
+export default function Chatbot({ dataContext, onVisualizationRequest }: ChatbotProps) {
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string; analysis?: any }[]>([
     { role: 'assistant', text: 'Hi! I am your AI Data Assistant. Upload data and ask me to analyze it, suggest cleaning steps, or perform specific EDA tasks.' }
   ]);
   const [input, setInput] = useState('');
@@ -40,24 +41,68 @@ export default function Chatbot({ dataContext }: ChatbotProps) {
       const columns = dataContext.length > 0 ? Object.keys(dataContext[0]).join(', ') : 'No data uploaded yet.';
       const rowCount = dataContext.length;
 
+      const systemInstruction = `
+You are an AI Data Analyst Assistant. Your goal is to provide clear, concise answers to user questions about their data.
+
+🧠 CORE RESPONSIBILITIES
+1. Answer questions directly in the chat.
+2. ONLY suggest a visualization if the user explicitly asks for one (e.g., "show me a graph", "visualize...") or if the question is specifically about distributions/relationships that require a chart.
+3. If a question can be answered with a simple text explanation or a summary, do NOT recommend a chart.
+4. Keep answers professional but concise.
+
+📦 RESPONSE FORMAT (STRICT JSON)
+{
+  "answer": "Your direct answer to the user's question.",
+  "recommended_chart": "null or chart_name (only if a chart is truly needed)",
+  "columns_used": ["column1", "column2"],
+  "analysis_type": "univariate | bivariate | multivariate | none"
+}
+`;
+
       const prompt = `
-        You are an expert Data Scientist assistant for an Automated Data Cleaning Pipeline app.
         Current Dataset Info:
         - Total Rows: ${rowCount}
         - Columns: ${columns}
         - Sample Data (first 5 rows): ${JSON.stringify(sampleData)}
 
         User Request: ${userMsg}
-
-        Please provide a VERY short, concise answer (maximum 2 sentences). If asked for code, provide a tiny snippet. Focus only on the exact keyword or question asked.
       `;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: prompt,
+        config: {
+          systemInstruction: systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              answer: { type: Type.STRING, description: "The concise text answer to show in chat." },
+              recommended_chart: { type: Type.STRING, nullable: true, description: "The chart type if needed, otherwise null." },
+              columns_used: { type: Type.ARRAY, items: { type: Type.STRING } },
+              analysis_type: { type: Type.STRING },
+            },
+            required: ["answer", "analysis_type"]
+          }
+        },
       });
 
-      setMessages(prev => [...prev, { role: 'assistant', text: response.text || 'Sorry, I could not generate a response.' }]);
+      const result = JSON.parse(response.text || '{}');
+      
+      if (result.recommended_chart && result.recommended_chart !== "null" && onVisualizationRequest) {
+        onVisualizationRequest({
+          type: result.recommended_chart,
+          column: result.columns_used?.[0],
+          columns: result.columns_used,
+        });
+      }
+
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        text: result.answer,
+        analysis: result 
+      }]);
+
     } catch (error) {
       console.error('Gemini API Error:', error);
       setMessages(prev => [...prev, { role: 'assistant', text: 'Oops! Something went wrong connecting to the AI. Please check your API key and try again.' }]);
@@ -67,7 +112,7 @@ export default function Chatbot({ dataContext }: ChatbotProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#040B16]">
+    <div className="flex-1 min-h-0 flex flex-col bg-[#040B16] overflow-hidden h-full">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <AnimatePresence initial={false}>
           {messages.map((msg, idx) => (
@@ -80,7 +125,7 @@ export default function Chatbot({ dataContext }: ChatbotProps) {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-gradient-to-r from-[#34d399] to-[#10b981] text-white' : 'bg-white/10 text-brand-green'}`}>
                 {msg.role === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
               </div>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${msg.role === 'user' ? 'bg-gradient-to-r from-[#34d399] to-[#10b981] text-white rounded-tr-sm' : 'bg-[#0B1121] border border-white/10 text-gray-300 rounded-tl-sm'}`}>
+              <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm selectable-text ${msg.role === 'user' ? 'bg-gradient-to-r from-[#34d399] to-[#10b981] text-white rounded-tr-sm' : 'bg-[#0B1121] border border-white/10 text-gray-300 rounded-tl-sm'}`}>
                 <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.text}</p>
               </div>
             </motion.div>
@@ -101,7 +146,7 @@ export default function Chatbot({ dataContext }: ChatbotProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-[#0B1121] border-t border-white/10">
+      <div className="p-4 bg-[#0B1121] border-t border-white/10 shrink-0">
         <form onSubmit={handleSend} className="relative flex items-center">
           <input
             type="text"

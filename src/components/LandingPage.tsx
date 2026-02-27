@@ -155,17 +155,10 @@ export default function LandingPage({ onGetStarted, user }: LandingPageProps) {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <div className="relative flex items-center justify-center w-5 h-5 rounded-full border border-gray-500 shrink-0">
-              <span className="text-[10px]">C</span>
-              <div className="absolute w-full h-[1px] bg-gray-500 -rotate-45"></div>
-            </div>
-            <span>No Copyright. Free to use and deploy.</span>
-          </div>
-          <div className="flex items-center gap-4 text-gray-500 text-sm">
-            <span>Designed for the future of data.</span>
-          </div>
+        <div className="max-w-6xl mx-auto pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-center gap-4">
+          <p className="text-gray-500 text-sm">
+            © {new Date().getFullYear()} Automated Data Cleaning Pipeline. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>

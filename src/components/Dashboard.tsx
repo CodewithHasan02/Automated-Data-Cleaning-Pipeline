@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<'data' | 'eda'>('data');
   const [cleaningStats, setCleaningStats] = useState<{ rowsRemoved: number, nullsFilled: number } | null>(null);
+  const [visualizationRequest, setVisualizationRequest] = useState<{ type: string; column?: string; columns?: string[] } | null>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -28,6 +29,7 @@ export default function Dashboard() {
           setRawData(results.data);
           setCleanedData([]); // Reset cleaned data on new upload
           setCleaningStats(null);
+          setVisualizationRequest(null);
         }
       });
     }
@@ -46,20 +48,30 @@ export default function Dashboard() {
     setIsProcessing(false);
   };
 
+  const handleVisualizationRequest = (details: { type: string; column?: string; columns?: string[] }) => {
+    setVisualizationRequest(details);
+    setActiveTab('eda');
+  };
+
   return (
-    <div className="flex flex-col md:flex-row h-full bg-[#040B16] overflow-hidden text-white">
+    <div className="flex flex-col md:flex-row min-h-full bg-[#040B16] text-white">
       {/* Left Sidebar - Chatbot */}
-      <div className="w-full md:w-80 h-[40vh] md:h-full shrink-0 bg-[#0B1121] border-b md:border-b-0 md:border-r border-white/10 flex flex-col shadow-sm z-10">
-        <div className="p-4 border-b border-white/10 flex items-center gap-2 bg-emerald-500/5">
+      <div className="w-full md:w-80 shrink-0 bg-[#0B1121] border-b md:border-b-0 md:border-r border-white/10 flex flex-col shadow-sm z-20">
+        <div className="p-4 border-b border-white/10 flex items-center gap-2 bg-emerald-500/5 sticky top-0 md:top-[72px] z-30">
           <MessageSquare className="w-5 h-5 text-brand-green" />
           <h2 className="font-semibold text-white">AI Assistant</h2>
         </div>
-        <Chatbot dataContext={cleanedData.length > 0 ? cleanedData : rawData} />
+        <div className="h-[500px] md:h-[calc(100vh-130px)] md:sticky md:top-[128px] flex flex-col overflow-hidden">
+          <Chatbot 
+            dataContext={cleanedData.length > 0 ? cleanedData : rawData} 
+            onVisualizationRequest={handleVisualizationRequest}
+          />
+        </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <header className="bg-[#0B1121] border-b border-white/10 px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between shadow-sm z-10 gap-4 md:gap-0">
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="bg-[#0B1121] border-b border-white/10 px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between shadow-sm z-10 gap-4 md:gap-0 sticky top-[72px]">
           <h1 className="text-xl font-bold text-white">Data Pipeline</h1>
           
           <div className="flex items-center gap-4">
@@ -87,7 +99,7 @@ export default function Dashboard() {
                   </button>
                 ) : (
                   <button 
-                    onClick={() => { setFile(null); setRawData([]); setCleanedData([]); }}
+                    onClick={() => { setFile(null); setRawData([]); setCleanedData([]); setVisualizationRequest(null); }}
                     className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     Clear
@@ -99,7 +111,7 @@ export default function Dashboard() {
         </header>
 
         {/* Content Body */}
-        <main className="flex-1 overflow-auto p-6 bg-[#040B16]">
+        <main className="flex-1 p-6 bg-[#040B16]">
           {!file ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-white/10 rounded-2xl bg-[#0B1121] p-8 text-center">
               <UploadCloud className="w-16 h-16 mb-4 text-gray-600" />
@@ -190,7 +202,7 @@ export default function Dashboard() {
                 {activeTab === 'data' ? (
                   <DataViewer rawData={rawData} cleanedData={cleanedData} />
                 ) : (
-                  <EDAViewer data={cleanedData} />
+                  <EDAViewer data={cleanedData} requestedVisualization={visualizationRequest} />
                 )}
               </div>
             </div>
