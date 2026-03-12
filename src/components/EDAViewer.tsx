@@ -11,25 +11,28 @@ interface EDAViewerProps {
 const COLORS = ['#34d399', '#4285F4', '#F4B400', '#DB4437', '#10b981', '#009688'];
 
 export default function EDAViewer({ data, requestedVisualization }: EDAViewerProps) {
+  const activeData = useMemo(() => data.filter(r => !r._isDeleted), [data]);
+
   const { numericCols, categoricalCols } = useMemo(() => {
-    if (!data || data.length === 0) return { numericCols: [], categoricalCols: [] };
+    if (!activeData || activeData.length === 0) return { numericCols: [], categoricalCols: [] };
     
-    const sample = data[0];
+    const sample = activeData[0];
     const numCols: string[] = [];
     const catCols: string[] = [];
     
     Object.keys(sample).forEach(key => {
-      const isNumeric = data.some(row => typeof row[key] === 'number' && !isNaN(row[key]));
+      if (key.startsWith('_')) return; // Skip internal columns
+      const isNumeric = activeData.some(row => typeof row[key] === 'number' && !isNaN(row[key]));
       if (isNumeric) numCols.push(key);
       else catCols.push(key);
     });
     
     return { numericCols: numCols, categoricalCols: catCols };
-  }, [data]);
+  }, [activeData]);
 
   const getCategoricalDistribution = (col: string) => {
     const counts: Record<string, number> = {};
-    data.forEach(row => {
+    activeData.forEach(row => {
       const val = String(row[col] || 'Unknown');
       counts[val] = (counts[val] || 0) + 1;
     });
@@ -38,7 +41,7 @@ export default function EDAViewer({ data, requestedVisualization }: EDAViewerPro
 
   const getNumericDistribution = (col: string) => {
     // Simple binning for numeric data
-    const values = data.map(r => Number(r[col])).filter(v => !isNaN(v));
+    const values = activeData.map(r => Number(r[col])).filter(v => !isNaN(v));
     if (values.length === 0) return [];
     
     const min = Math.min(...values);

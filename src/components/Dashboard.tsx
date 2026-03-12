@@ -53,14 +53,54 @@ export default function Dashboard() {
     setActiveTab('eda');
   };
 
-  const handleDownload = () => {
+  const handleDownloadCleaned = () => {
     if (!cleanedData.length) return;
-    const csv = Papa.unparse(cleanedData);
+    // Fully cleaned data: Outlier rows deleted, Empty rows deleted, Numeric nulls filled with mean, Categorical nulls filled with mode
+    // NO Cleaning_Status or Cleaning_Audit_Logs columns
+    const exportData = cleanedData
+      .filter(row => !row._isDeleted)
+      .map(row => {
+        const { _isDeleted, _isOutlier, _isModified, _cleaningLogs, ...rest } = row;
+        return rest;
+      });
+      
+    const csv = Papa.unparse(exportData);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', `cleaned_${file?.name || 'data.csv'}`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadAudit = () => {
+    if (!cleanedData.length) return;
+    // Audit data: contain this two column like it was fully raw format and uncleaned data
+    const exportData = cleanedData.map(row => {
+      const { _isDeleted, _isOutlier, _isModified, _cleaningLogs, ...rest } = row;
+      
+      let status = 'CLEAN';
+      if (_isDeleted) {
+        status = _isOutlier ? 'REMOVED (OUTLIER)' : 'REMOVED (EMPTY)';
+      }
+      else if (_isModified) status = 'MODIFIED (FILLED)';
+
+      return {
+        ...rest,
+        'Cleaning_Status': status,
+        'Cleaning_Audit_Logs': (_cleaningLogs || []).join(' | ')
+      };
+    });
+      
+    const csv = Papa.unparse(exportData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `audit_report_${file?.name || 'data.csv'}`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -114,14 +154,20 @@ export default function Dashboard() {
                 ) : (
                   <div className="flex items-center gap-2">
                     <button 
-                      onClick={handleDownload}
-                      className="bg-brand-green/10 hover:bg-brand-green/20 text-brand-green border border-brand-green/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors shadow-sm"
+                      onClick={handleDownloadCleaned}
+                      className="bg-brand-green text-white hover:bg-brand-green/90 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors shadow-sm"
                     >
-                      <Download className="w-4 h-4" /> Download
+                      <Download className="w-4 h-4" /> Download Cleaned
+                    </button>
+                    <button 
+                      onClick={handleDownloadAudit}
+                      className="bg-white/10 hover:bg-white/20 text-white border border-white/10 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors shadow-sm"
+                    >
+                      <FileText className="w-4 h-4" /> Download Audit Report
                     </button>
                     <button 
                       onClick={() => { setFile(null); setRawData([]); setCleanedData([]); setVisualizationRequest(null); }}
-                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                     >
                       Clear
                     </button>
@@ -185,7 +231,12 @@ export default function Dashboard() {
                         </div>
                         <div className="hidden md:block w-px h-8 bg-white/10"></div>
                         <div className="text-center flex-1">
-                          <div className="text-2xl font-bold text-brand-green">{cleanedData.length}</div>
+                          <div className="text-2xl font-bold text-blue-400">{cleaningStats.outliersHandled}</div>
+                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Outliers Detected</div>
+                        </div>
+                        <div className="hidden md:block w-px h-8 bg-white/10"></div>
+                        <div className="text-center flex-1">
+                          <div className="text-2xl font-bold text-brand-green">{cleanedData.filter(r => !r._isDeleted).length}</div>
                           <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Final Rows</div>
                         </div>
                       </div>
@@ -194,7 +245,7 @@ export default function Dashboard() {
                     <div className="lg:col-span-1 h-[250px]">
                       <BeforeAfterGraph 
                         rawDataLength={rawData.length} 
-                        cleanedDataLength={cleanedData.length} 
+                        cleanedDataLength={cleanedData.filter(r => !r._isDeleted).length} 
                         nullsFilled={cleaningStats.nullsFilled} 
                       />
                     </div>
@@ -222,9 +273,12 @@ export default function Dashboard() {
               {/* Tab Content */}
               <div className="flex-1 bg-[#0B1121] rounded-xl border border-white/10 shadow-sm overflow-hidden">
                 {activeTab === 'data' ? (
-                  <DataViewer rawData={rawData} cleanedData={cleanedData} />
+                  <DataViewer 
+                    rawData={rawData} 
+                    cleanedData={cleanedData.filter(r => !r._isDeleted)} 
+                  />
                 ) : (
-                  <EDAViewer data={cleanedData} requestedVisualization={visualizationRequest} />
+                  <EDAViewer data={cleanedData.filter(r => !r._isDeleted)} requestedVisualization={visualizationRequest} />
                 )}
               </div>
             </div>
