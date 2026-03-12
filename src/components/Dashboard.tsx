@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
-import { UploadCloud, FileText, CheckCircle, BarChart2, MessageSquare, Loader2 } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle, BarChart2, MessageSquare, Loader2, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import DataViewer from './DataViewer';
 import EDAViewer from './EDAViewer';
@@ -53,6 +53,20 @@ export default function Dashboard() {
     setActiveTab('eda');
   };
 
+  const handleDownload = () => {
+    if (!cleanedData.length) return;
+    const csv = Papa.unparse(cleanedData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `cleaned_${file?.name || 'data.csv'}`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="flex flex-col md:flex-row min-h-full bg-[#040B16] text-white">
       {/* Left Sidebar - Chatbot */}
@@ -98,12 +112,20 @@ export default function Dashboard() {
                     {isProcessing ? 'Cleaning...' : 'Preprocess Data'}
                   </button>
                 ) : (
-                  <button 
-                    onClick={() => { setFile(null); setRawData([]); setCleanedData([]); setVisualizationRequest(null); }}
-                    className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Clear
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handleDownload}
+                      className="bg-brand-green/10 hover:bg-brand-green/20 text-brand-green border border-brand-green/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors shadow-sm"
+                    >
+                      <Download className="w-4 h-4" /> Download
+                    </button>
+                    <button 
+                      onClick={() => { setFile(null); setRawData([]); setCleanedData([]); setVisualizationRequest(null); }}
+                      className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
                 )}
               </div>
             )}
