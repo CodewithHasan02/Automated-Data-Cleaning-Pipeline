@@ -37,7 +37,7 @@ export function processData(rawData: any[]) {
         return row;
       });
 
-      // IQR Outlier Handling
+      // Outlier Detection (IQR Method) - Mark row for removal
       const values = cleaned.filter(r => !r._isDeleted).map(r => Number(r[col])).filter(v => !isNaN(v)).sort((a, b) => a - b);
       if (values.length > 4) {
         const q1 = values[Math.floor(values.length * 0.25)];
@@ -52,9 +52,9 @@ export function processData(rawData: any[]) {
             if (val < lowerBound || val > upperBound) {
               return {
                 ...row,
-                _isDeleted: true, // Mark for removal
+                _isDeleted: true,
                 _isOutlier: true,
-                _cleaningLogs: [...(row._cleaningLogs || []), `Outlier detected in ${col} (${val}) - Row marked for removal`]
+                _cleaningLogs: [...(row._cleaningLogs || []), `Outlier detected in ${col} (${val}) - Row removed`]
               };
             }
           }

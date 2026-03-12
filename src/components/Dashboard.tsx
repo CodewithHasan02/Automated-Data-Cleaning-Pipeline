@@ -55,7 +55,7 @@ export default function Dashboard() {
 
   const handleDownloadCleaned = () => {
     if (!cleanedData.length) return;
-    // Fully cleaned data: Outlier rows deleted, Empty rows deleted, Numeric nulls filled with mean, Categorical nulls filled with mode
+    // Fully cleaned data: Empty rows deleted, Numeric nulls filled with mean, Categorical nulls filled with mode
     // NO Cleaning_Status or Cleaning_Audit_Logs columns
     const exportData = cleanedData
       .filter(row => !row._isDeleted)
@@ -232,7 +232,7 @@ export default function Dashboard() {
                         <div className="hidden md:block w-px h-8 bg-white/10"></div>
                         <div className="text-center flex-1">
                           <div className="text-2xl font-bold text-blue-400">{cleaningStats.outliersHandled}</div>
-                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Outliers Detected</div>
+                          <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Outliers Removed</div>
                         </div>
                         <div className="hidden md:block w-px h-8 bg-white/10"></div>
                         <div className="text-center flex-1">
